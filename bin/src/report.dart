@@ -17,6 +17,8 @@ class ReportPart extends CommandLinePart {
       ..addFlag("help", help: "Displays this help", negatable: false)
       ..addOption("token",
           help: "Token for coveralls", defaultsTo: Platform.environment["test"])
+      ..addFlag("calc",
+          help: "Calculate coverage before reporting", defaultsTo: true)
       ..addOption("workers",
           help: "Number of workers for parsing", defaultsTo: "1")
       ..addOption("package-root", help: "Root package", defaultsTo: ".")
@@ -42,8 +44,11 @@ class ReportPart extends CommandLinePart {
   }
 
   void execute(ArgResults res) {
+    var calc = res["calc"];
+
     if (res["help"]) return print(parser.usage);
-    if (res.rest.length != 1) return print("Please specify a test file to run");
+    if (res.rest.length != 1 && calc) return print("Please specify a test file to run");
+    if (res.rest.length != 1 && !calc) return print("Please specify an lcov input file");
     if (res["debug"]) {
       log.onRecord.listen((rec) => print(rec));
     }
@@ -58,16 +63,18 @@ class ReportPart extends CommandLinePart {
     var throwOnConnectivityError = res["throw-on-connectivity-error"];
     var excludeTestFiles = res["exclude-test-files"];
 
-    if (!pRoot.existsSync()) return print("Root directory does not exist");
-    log.info(() => "Package root is ${pRoot.absolute.path}");
-    if (!file.existsSync()) return print("Dart file does not exist");
-    log.info(() => "Evaluated dart file is ${file.absolute.path}");
-    if (token == null) {
-      if (!dryRun) return print("Please specify a repo token");
+    if (calc) {
+      if (!pRoot.existsSync()) return print("Root directory does not exist");
+      log.info(() => "Package root is ${pRoot.absolute.path}");
+      if (!file.existsSync()) return print("Dart file does not exist");
+      log.info(() => "Evaluated dart file is ${file.absolute.path}");
+    } else {
+      if (!file.existsSync()) return print("lcov file does not exist");
+      log.info(() => "Evaluated lcov file is ${file.absolute.path}");
+    }
+    if (token == null && dryRun) {
       token = "test";
     }
-    // We don't print out the token here as it could end up in public build logs.
-    log.info("Token is ${token.isEmpty ? 'empty' : 'not empty'}");
 
     var errorFunction = (e) {
       if (throwOnError) throw e;
@@ -75,8 +82,14 @@ class ReportPart extends CommandLinePart {
 
     try {
       var commandLineClient = new CommandLineClient(pRoot, token: token);
+      // We don't print out the token here as it could end up in public build logs.
+      log.info("Token is ${(token == null || token.isEmpty) ? 'empty' : 'not empty'}");
+      if (commandLineClient.token == null) {
+        return print("Please specify a repo token");
+      }
       runZoned(() {
         commandLineClient.reportToCoveralls(file,
+            calc: calc,
             workers: workers,
             dryRun: dryRun,
             retry: retry,

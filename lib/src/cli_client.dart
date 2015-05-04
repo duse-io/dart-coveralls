@@ -50,24 +50,30 @@ class CommandLineClient {
     return serviceName;
   }
 
-  Future reportToCoveralls(File testFile, {int workers,
+  Future reportToCoveralls(File inputFile, {bool calc: true, int workers,
       ProcessSystem processSystem: const ProcessSystem(),
       String coverallsAddress, bool dryRun: false,
       bool throwOnConnectivityError: false, int retry: 0,
-      bool excludeTestFiles: false}) {
-    return getLcovResult(testFile,
-        workers: workers, processSystem: processSystem).then((rawLcov) {
+      bool excludeTestFiles: false}) async {
+    CoverageResult<String> rawLcov;
+    if (calc) {
+      rawLcov = await getLcovResult(inputFile,
+          workers: workers, processSystem: processSystem);
+    } else {
+      rawLcov = new CoverageResult<String>(inputFile.readAsStringSync(), null);
+    }
+    if (rawLcov.processResult != null) {
       print(rawLcov.processResult.stdout);
-      var lcov = LcovDocument.parse(rawLcov.result.toString());
-      var report = CoverallsReport.parse(token, lcov, packageRoot, serviceName,
-          excludeTestFiles: excludeTestFiles);
-      var endpoint = new CoverallsEndpoint(coverallsAddress);
-      if (dryRun) return new Future.value();
-      return _sendLoop(endpoint, report.covString(), retry: retry)
-          .catchError((e) {
-        if (throwOnConnectivityError) throw e;
-        print("Caught $e");
-      });
+    }
+    var lcov = LcovDocument.parse(rawLcov.result.toString());
+    var report = CoverallsReport.parse(token, lcov, packageRoot, serviceName,
+        excludeTestFiles: excludeTestFiles);
+    var endpoint = new CoverallsEndpoint(coverallsAddress);
+    if (dryRun) return new Future.value();
+    return _sendLoop(endpoint, report.covString(), retry: retry)
+        .catchError((e) {
+      if (throwOnConnectivityError) throw e;
+      print("Caught $e");
     });
   }
 
