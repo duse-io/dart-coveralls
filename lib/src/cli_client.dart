@@ -12,6 +12,7 @@ import 'coveralls_endpoint.dart';
 import 'coveralls_entities.dart';
 import 'log.dart';
 import 'process_system.dart';
+import 'services/travis.dart' as travis;
 
 class CommandLineClient {
   final String projectDirectory;
@@ -58,9 +59,14 @@ class CommandLineClient {
 
   static String getServiceName([Map<String, String> environment]) {
     if (null == environment) environment = Platform.environment;
+
     var serviceName = environment["COVERALLS_SERVICE_NAME"];
-    if (serviceName == null) return "local";
-    return serviceName;
+    if (serviceName != null) return serviceName;
+
+    serviceName = travis.getServiceName(environment);
+    if (serviceName != null) return serviceName;
+
+    return "local";
   }
 
   Future reportToCoveralls(String testFile, {int workers,
