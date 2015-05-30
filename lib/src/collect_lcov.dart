@@ -62,6 +62,20 @@ class LcovCollector {
     }
   }
 
+  Future<CoverageResult<String>> convertVmReportsToLcov(
+      Directory directoryContainingVmReports,
+      {int workers: 1}) async {
+    var reportFiles =
+        await directoryContainingVmReports.list(recursive: false, followLinks: false).toList();
+
+    var hitmap = await parseCoverage(reportFiles, workers);
+    var resolver = new Resolver(packageRoot: packageRoot, sdkRoot: sdkRoot);
+    var formatter = new LcovFormatter(resolver);
+
+    var res = await formatter.format(hitmap);
+    return new CoverageResult<String>(res, null);
+  }
+
   // TODO: perhaps provide an option to NOT delete the temp file and instead
   //       print out the path for other tooling
   /// Returns an LCOV string of the tested [File].
@@ -83,6 +97,10 @@ class LcovCollector {
     } finally {
       await tempDir.delete(recursive: true);
     }
+  }
+
+  Future<CoverageResult<String>> convertVmReportToLcov({int workers: 1}) async {
+
   }
 
   /// Generates and returns a coverage json file
