@@ -57,7 +57,7 @@ class UploadPart extends CommandLinePart {
       var commandLineClient =
           new CommandLineClient(packageRoot: pRoot.absolute.path, token: token);
 
-      await commandLineClient.convertAndUploadToCoveralls(directory.absolute.path,
+      await commandLineClient.convertAndUploadToCoveralls(directory.absolute,
           workers: workers,
           dryRun: dryRun,
           retry: retry,
@@ -72,6 +72,7 @@ ArgParser _initializeParser() => new ArgParser(allowTrailingOptions: true)
   ..addFlag("help", help: "Displays this help", negatable: false)
   ..addOption("token",
       help: "Token for coveralls", defaultsTo: Platform.environment["test"])
+  ..addOption("workers", help: "Number of workers for parsing", defaultsTo: "1")
   ..addOption("package-root",
       help: 'Where to find packages, that is, "package:..." imports.',
       defaultsTo: "packages")

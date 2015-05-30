@@ -37,8 +37,8 @@ class CommandLineClient {
   Future<CoverageResult<String>> getLcovResult(String testFile,
       {int workers, ProcessSystem processSystem: const ProcessSystem()}) {
     var collector =
-        new LcovCollector(packageRoot, testFile, processSystem: processSystem);
-    return collector.getLcovInformation(workers: workers);
+        new LcovCollector(packageRoot, processSystem: processSystem);
+    return collector.getLcovInformation(testFile, workers: workers);
   }
 
   /// Returns [candidate] if not null, otherwise environment's REPO_TOKEN
@@ -59,9 +59,9 @@ class CommandLineClient {
       bool throwOnConnectivityError: false, int retry: 0,
       bool excludeTestFiles: false, bool printJson}) async {
     var collector =
-        new LcovCollector(packageRoot, null, processSystem: processSystem);
+        new LcovCollector(packageRoot, processSystem: processSystem);
 
-    var result = collector.convertVmReportsToLcov(containsVmReports, workers: workers);
+    var result = await collector.convertVmReportsToLcov(containsVmReports, workers: workers);
     
     return uploadToCoveralls(result, workers: workers, processSystem: processSystem,
       dryRun: dryRun, throwOnConnectivityError: throwOnConnectivityError,
