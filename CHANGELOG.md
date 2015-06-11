@@ -1,3 +1,8 @@
+### 0.4.0-dev
+
+* Add an upload-only option, which does not
+  run any script
+
 ### 0.3.0+1
 
 * Support the latest `coverage` `0.7.0` series releases.
