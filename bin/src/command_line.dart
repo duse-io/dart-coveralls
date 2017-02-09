@@ -1,16 +1,46 @@
 library cmdpart;
 
 import 'dart:async';
+import 'dart:io' show FileSystemEntity;
 import "dart:math" show max;
 
 import "package:args/args.dart";
+import 'package:path/path.dart' as p;
+import 'package:logging/logging.dart';
 
 export "package:args/args.dart";
+
+final Logger _log = new Logger("dart_coveralls");
 
 abstract class CommandLinePart {
   final ArgParser parser;
 
   CommandLinePart(this.parser);
+
+  String handlePackagesArg(ArgResults res) {
+    String packagesPath = res["packages"];
+    if (p.isRelative(packagesPath)) {
+      packagesPath = p.absolute(packagesPath);
+    }
+
+    if (!FileSystemEntity.isFileSync(packagesPath)) {
+      print("Packages file does not exist");
+      return null;
+    }
+
+    _log.info(() => "Packages file is ${packagesPath}");
+
+    return packagesPath;
+  }
+
+  static ArgParser addCommonOptions(ArgParser parser) {
+    return parser
+      ..addFlag("help", help: "Displays this help", negatable: false)
+      ..addOption("packages",
+          help:
+              'Path to .packages file -- controls "package:..." import paths.',
+          defaultsTo: ".packages");
+  }
 
   Future parseAndExecute(List<String> args) => execute(parser.parse(args));
 

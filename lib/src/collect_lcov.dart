@@ -50,10 +50,10 @@ class LcovPart {
 
 class LcovCollector {
   final String sdkRoot;
-  final String packageRoot;
+  final String packagesPath;
   final ProcessSystem processSystem;
 
-  LcovCollector(this.packageRoot,
+  LcovCollector(this.packagesPath,
       {this.processSystem: const ProcessSystem(), this.sdkRoot}) {}
 
   Future<CoverageResult<String>> convertVmReportsToLcov(
@@ -65,7 +65,7 @@ class LcovCollector {
         .toList();
 
     var hitmap = await parseCoverage(reportFiles, workers);
-    var resolver = new Resolver(packageRoot: packageRoot, sdkRoot: sdkRoot);
+    var resolver = new Resolver(packagesPath: packagesPath, sdkRoot: sdkRoot);
     var formatter = new LcovFormatter(resolver);
 
     var res = await formatter.format(hitmap);
@@ -91,7 +91,7 @@ class LcovCollector {
       var reportFile = await _getCoverageJson(testFile, tempDir);
 
       var hitmap = await parseCoverage(reportFile.result, workers);
-      var resolver = new Resolver(packageRoot: packageRoot, sdkRoot: sdkRoot);
+      var resolver = new Resolver(packagesPath: packagesPath, sdkRoot: sdkRoot);
       var formatter = new LcovFormatter(resolver);
 
       var res = await formatter.format(hitmap);
@@ -106,7 +106,7 @@ class LcovCollector {
       String testFile, Directory coverageDir) async {
     var args = [
       "--coverage_dir=${coverageDir.path}",
-      "--package-root=${packageRoot}",
+      "--packages=${packagesPath}",
       testFile
     ];
     var result = await processSystem.runProcess(Platform.executable, args);

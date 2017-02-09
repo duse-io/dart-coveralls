@@ -16,29 +16,27 @@ import 'services/travis.dart' as travis;
 
 class CommandLineClient {
   final String projectDirectory;
-  final String packageRoot;
+  final String packagesPath;
   final String token;
 
-  CommandLineClient._(this.projectDirectory, this.packageRoot, this.token);
+  CommandLineClient._(this.projectDirectory, this.packagesPath, this.token);
 
   factory CommandLineClient(
       {String projectDirectory,
-      String packageRoot,
+      String packagesPath,
       String token,
       Map<String, String> environment}) {
     if (projectDirectory == null) {
       projectDirectory = p.current;
     }
 
-    packageRoot = _calcPackageRoot(projectDirectory, packageRoot);
-
-    return new CommandLineClient._(projectDirectory, packageRoot, token);
+    return new CommandLineClient._(projectDirectory, packagesPath, token);
   }
 
   Future<CoverageResult<String>> getLcovResult(String testFile,
       {int workers, ProcessSystem processSystem: const ProcessSystem()}) {
     var collector =
-        new LcovCollector(packageRoot, processSystem: processSystem);
+        new LcovCollector(packagesPath, processSystem: processSystem);
     return collector.getLcovInformation(testFile, workers: workers);
   }
 
@@ -92,7 +90,7 @@ class CommandLineClient {
       bool excludeTestFiles: false,
       bool printJson}) async {
     var collector =
-        new LcovCollector(packageRoot, processSystem: processSystem);
+        new LcovCollector(packagesPath, processSystem: processSystem);
 
     var result = await collector.convertVmReportsToLcov(containsVmReports,
         workers: workers);
@@ -145,20 +143,6 @@ class CommandLineClient {
       return null;
     }
   }
-}
-
-String _calcPackageRoot(String packageDir, String packageRoot) {
-  assert(p.isAbsolute(packageDir));
-
-  if (packageRoot == null) {
-    packageRoot = 'packages';
-  }
-
-  if (p.isRelative(packageRoot)) {
-    packageRoot = p.join(packageDir, packageRoot);
-  }
-
-  return p.normalize(packageRoot);
 }
 
 Future<CoverallsResult> _sendLoop(CoverallsEndpoint endpoint, String covString,

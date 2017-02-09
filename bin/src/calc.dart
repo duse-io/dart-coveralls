@@ -17,15 +17,8 @@ class CalcPart extends CommandLinePart {
       return;
     }
 
-    String packageRoot = res["package-root"];
-    if (p.isRelative(packageRoot)) {
-      packageRoot = p.absolute(packageRoot);
-    }
-
-    if (!FileSystemEntity.isDirectorySync(packageRoot)) {
-      print("Package root directory does not exist");
-      return;
-    }
+    String packagesPath = handlePackagesArg(res);
+    if (packagesPath == null) return;
 
     if (res.rest.length != 1) {
       print("Please specify a test file to run");
@@ -43,7 +36,7 @@ class CalcPart extends CommandLinePart {
     }
 
     var workers = int.parse(res["workers"]);
-    var collector = new LcovCollector(packageRoot);
+    var collector = new LcovCollector(packagesPath);
 
     var r = await collector.getLcovInformation(file, workers: workers);
 
@@ -56,10 +49,10 @@ class CalcPart extends CommandLinePart {
   }
 }
 
-ArgParser _initializeParser() => new ArgParser(allowTrailingOptions: true)
-  ..addFlag("help", help: "Prints this help", negatable: false)
-  ..addOption("workers", help: "Number of workers for parsing", defaultsTo: "1")
-  ..addOption("output", help: "Output file path")
-  ..addOption("package-root",
-      help: 'Where to find packages, that is, "package:..." imports.',
-      defaultsTo: "packages");
+ArgParser _initializeParser() {
+  ArgParser parser = new ArgParser(allowTrailingOptions: true)
+    ..addOption("workers",
+        help: "Number of workers for parsing", defaultsTo: "1")
+    ..addOption("output", help: "Output file path");
+  return CommandLinePart.addCommonOptions(parser);
+}
