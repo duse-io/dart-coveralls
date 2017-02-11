@@ -1,6 +1,7 @@
 library dart_coveralls.lcov;
 
 import "dart:async" show Future;
+import "dart:convert";
 import "dart:io";
 
 import "package:coverage/coverage.dart";
@@ -50,10 +51,10 @@ class LcovPart {
 
 class LcovCollector {
   final String sdkRoot;
-  final String packageRoot;
+  final String packagesPath;
   final ProcessSystem processSystem;
 
-  LcovCollector(this.packageRoot,
+  LcovCollector(this.packagesPath,
       {this.processSystem: const ProcessSystem(), this.sdkRoot}) {}
 
   Future<CoverageResult<String>> convertVmReportsToLcov(
@@ -65,7 +66,7 @@ class LcovCollector {
         .toList();
 
     var hitmap = await parseCoverage(reportFiles, workers);
-    var resolver = new Resolver(packageRoot: packageRoot, sdkRoot: sdkRoot);
+    var resolver = new Resolver(packagesPath: packagesPath, sdkRoot: sdkRoot);
     var formatter = new LcovFormatter(resolver);
 
     var res = await formatter.format(hitmap);
@@ -91,7 +92,7 @@ class LcovCollector {
       var reportFile = await _getCoverageJson(testFile, tempDir);
 
       var hitmap = await parseCoverage(reportFile.result, workers);
-      var resolver = new Resolver(packageRoot: packageRoot, sdkRoot: sdkRoot);
+      var resolver = new Resolver(packagesPath: packagesPath, sdkRoot: sdkRoot);
       var formatter = new LcovFormatter(resolver);
 
       var res = await formatter.format(hitmap);
@@ -104,26 +105,23 @@ class LcovCollector {
   /// Generates and returns a coverage json file
   Future<CoverageResult<List<File>>> _getCoverageJson(
       String testFile, Directory coverageDir) async {
+    int observatoryPort = 8181; // FIXME: Should read out port instead?
     var args = [
-      "--coverage_dir=${coverageDir.path}",
-      "--package-root=${packageRoot}",
+      "--packages=${packagesPath}",
+      "--pause-isolates-on-exit",
+      "--enable-vm-service=${observatoryPort}",
       testFile
     ];
-    var result = await processSystem.runProcess(Platform.executable, args);
-    if (result.exitCode < 0) {
-      stderr.writeln('stdout:');
-      stderr.writeln(result.stdout);
-      stderr.writeln('stderr:');
-      stderr.writeln(result.stderr);
-      throw new ProcessException(
-          Platform.executable,
-          args,
-          'There was a critical error. Exit code: ${result.exitCode}',
-          result.exitCode);
-    }
+    Future<ProcessResult> testFuture =
+        processSystem.runProcess(Platform.executable, args);
+    final Map data = await collect('localhost', observatoryPort, true, false);
+
+    new File(p.join(coverageDir.path, 'coverage.json'))
+        .writeAsString(JSON.encode(data));
+
     var reportFiles =
         await coverageDir.list(recursive: false, followLinks: false).toList();
-    return new CoverageResult<List<File>>(reportFiles, result);
+    return new CoverageResult<List<File>>(reportFiles, await testFuture);
   }
 }
 

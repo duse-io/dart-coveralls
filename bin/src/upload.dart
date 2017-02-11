@@ -13,8 +13,8 @@ class UploadPart extends CommandLinePart {
 
   Future execute(ArgResults res) async {
     if (res["help"]) return print(parser.usage);
-    if (res.rest.length != 1) return print(
-        "Please specify a directory containing VM coverage files");
+    if (res.rest.length != 1)
+      return print("Please specify a directory containing VM coverage files");
     if (res["debug"]) {
       log.onRecord.listen((rec) {
         print(rec.message);
@@ -27,7 +27,6 @@ class UploadPart extends CommandLinePart {
       });
     }
 
-    var pRoot = new Directory(res["package-root"]);
     var directory = new Directory(res.rest.single);
     var dryRun = res["dry-run"];
     var token = res["token"];
@@ -38,11 +37,11 @@ class UploadPart extends CommandLinePart {
     var excludeTestFiles = res["exclude-test-files"];
     var printJson = res["print-json"];
 
-    if (!pRoot
-        .existsSync()) return print("Package root directory does not exist");
-    log.info(() => "Package root is ${pRoot.absolute.path}");
-    if (!directory.existsSync()) return print(
-        "Directory containing VM coverage files does not exist");
+    var packagesPath = handlePackagesArg(res);
+    if (packagesPath == null) return null;
+
+    if (!directory.existsSync())
+      return print("Directory containing VM coverage files does not exist");
     log.info(() =>
         "Directory containing VM coverage files is ${directory.absolute.path}");
     if (token == null) {
@@ -59,7 +58,7 @@ class UploadPart extends CommandLinePart {
 
     await Chain.capture(() async {
       var commandLineClient =
-          new CommandLineClient(packageRoot: pRoot.absolute.path, token: token);
+          new CommandLineClient(packagesPath: packagesPath, token: token);
 
       await commandLineClient.convertAndUploadToCoveralls(directory.absolute,
           workers: workers,
@@ -72,32 +71,34 @@ class UploadPart extends CommandLinePart {
   }
 }
 
-ArgParser _initializeParser() => new ArgParser(allowTrailingOptions: true)
-  ..addFlag("help", help: "Displays this help", negatable: false)
-  ..addOption("token",
-      help: "Token for coveralls", defaultsTo: Platform.environment["test"])
-  ..addOption("workers", help: "Number of workers for parsing", defaultsTo: "1")
-  ..addOption("package-root",
-      help: 'Where to find packages, that is, "package:..." imports.',
-      defaultsTo: "packages")
-  ..addFlag("debug", help: "Prints debug information", negatable: false)
-  ..addOption("retry", help: "Number of retries", defaultsTo: "10")
-  ..addFlag("dry-run",
-      help: "If this flag is enabled, data won't be sent to coveralls",
-      negatable: false)
-  ..addFlag("throw-on-connectivity-error",
-      help: "Should this throw an exception, if the upload to coveralls fails?",
-      negatable: false,
-      abbr: "C")
-  ..addFlag("throw-on-error", help: "Should this throw if "
-      "an error in the dart_coveralls implementation happens?",
-      negatable: false,
-      abbr: "E")
-  ..addFlag("exclude-test-files",
-      abbr: "T",
-      help: "Should test files be included in the coveralls report?",
-      negatable: false)
-  ..addFlag("print-json",
-      abbr: 'p',
-      help: "Pretty-print the json that will be sent to coveralls.",
-      negatable: false);
+ArgParser _initializeParser() {
+  ArgParser parser = new ArgParser(allowTrailingOptions: true)
+    ..addOption("token",
+        help: "Token for coveralls", defaultsTo: Platform.environment["test"])
+    ..addOption("workers",
+        help: "Number of workers for parsing", defaultsTo: "1")
+    ..addFlag("debug", help: "Prints debug information", negatable: false)
+    ..addOption("retry", help: "Number of retries", defaultsTo: "10")
+    ..addFlag("dry-run",
+        help: "If this flag is enabled, data won't be sent to coveralls",
+        negatable: false)
+    ..addFlag("throw-on-connectivity-error",
+        help:
+            "Should this throw an exception, if the upload to coveralls fails?",
+        negatable: false,
+        abbr: "C")
+    ..addFlag("throw-on-error",
+        help: "Should this throw if "
+            "an error in the dart_coveralls implementation happens?",
+        negatable: false,
+        abbr: "E")
+    ..addFlag("exclude-test-files",
+        abbr: "T",
+        help: "Should test files be included in the coveralls report?",
+        negatable: false)
+    ..addFlag("print-json",
+        abbr: 'p',
+        help: "Pretty-print the json that will be sent to coveralls.",
+        negatable: false);
+  return parser;
+}
