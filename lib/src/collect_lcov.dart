@@ -135,8 +135,12 @@ class LcovCollector {
     Uri host = await hostCompleter.future;
 
     try {
-      Map<String, dynamic> coverageResults =
-          await collect(host, true, false, timeout: new Duration(seconds: 60));
+      Map<String, dynamic> coverageResults = await collect(
+        host,
+        /* resume isolate after collection */ true,
+        /* wait for pause-at-exit before collection */ true,
+        timeout: new Duration(seconds: 60),
+      );
       return coverageResults['coverage'];
     } catch (e) {
       print(e);
