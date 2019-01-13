@@ -148,7 +148,7 @@ class GitBranch {
   static GitBranch getCurrent(Directory dir,
       {ProcessSystem processSystem: const ProcessSystem()}) {
     var name = getCurrentBranchName(dir, processSystem: processSystem);
-    var args = ["show-ref", "$name", "--heads"];
+    var args = ["show-ref", "$name", "--heads --tags"];
     var result =
         processSystem.runProcessSync("git", args, workingDirectory: dir.path);
     if (0 != result.exitCode)
