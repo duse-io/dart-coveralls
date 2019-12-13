@@ -5,7 +5,7 @@ set -e
 
 dartanalyzer bin/dart_coveralls.dart lib/dart_coveralls.dart
 
-dart --checked test/test_all.dart
+dart --enable-asserts test/test_all.dart
 
 # Install dart_coveralls; gather and send coverage data.
 if [ "$COVERALLS_TOKEN" ] && [ "$TRAVIS_DART_VERSION" = "stable" ]; then
