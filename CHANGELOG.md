@@ -1,3 +1,8 @@
+### 0.6.0+5
+
+* Updated to latest coverage package (`^0.13.0`).
+* Removed deprecated `@proxy` annotations.
+
 ### 0.6.0+4
 
 * Fixed parser to ignore lines that are not `DA` line coverage entries.
@@ -26,7 +31,7 @@
   file path `.packages` will be used if no path is given in option `--package-root`.
   The `--packages` and `--package-root` options cannot be used together.
   
-* Refactored `LcovCollector` so that it doesn't duplicate logic already 
+* Refactored `LcovCollector` so that it doesn't duplicate logic already
   present in `coverage`.
   
 * Refactored `CommandLinePart`s to minimize duplicate code.
@@ -65,10 +70,10 @@
 * `service_name` and `service_job_id` are correctly populated form Travis and
   Coveralls.
 
-* Can omit the `token` flag to `report` if one of `REPO_TOKEN` or 
+* Can omit the `token` flag to `report` if one of `REPO_TOKEN` or
   `COVERALLS_TOKEN` is set as an environment variable.
 
-* The Coveralls job number and URL are printed after a successful report is 
+* The Coveralls job number and URL are printed after a successful report is
   posted to the service.
 
 ### 0.2.0
@@ -110,4 +115,4 @@
 
 * Improved the reporting of errors, especially async errors.
 
-* Add check of `CI_BRANCH` environment variable for Git branch. 
+* Add check of `CI_BRANCH` environment variable for Git branch.
