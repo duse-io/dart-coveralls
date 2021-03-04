@@ -87,7 +87,7 @@ class LcovCollector {
     }
 
     Map<String, Map<int, int>> hitmap = {};
-    mergeHitmaps(createHitmap(reportFile), hitmap);
+    mergeHitmaps(await createHitmap(reportFile), hitmap);
     return await _formatCoverageJson(hitmap);
   }
 
@@ -95,7 +95,7 @@ class LcovCollector {
   Future<String> _formatCoverageJson(Map<dynamic, dynamic> hitmap) {
     var resolver;
     if (packageRoot != null) {
-      resolver = new Resolver(packageRoot: packageRoot, sdkRoot: sdkRoot);
+      throw ArgumentError("packageRoot has been deprecated");
     } else {
       resolver = new Resolver(packagesPath: packagesPath, sdkRoot: sdkRoot);
     }
@@ -109,7 +109,7 @@ class LcovCollector {
 
     var dartArgs = ["--pause-isolates-on-exit", "--enable-vm-service"];
     if (packageRoot != null) {
-      dartArgs.add("--package-root=${packageRoot}");
+      throw ArgumentError("packageRoot has been deprecated");
     } else {
       dartArgs.add("--packages=${packagesPath}");
     }
@@ -135,7 +135,7 @@ class LcovCollector {
 
     try {
       Map<String, dynamic> coverageResults =
-          await collect(host, true, true, timeout: new Duration(seconds: 60));
+          await collect(host, true, true, false, null, timeout: new Duration(seconds: 60));
       return coverageResults['coverage'];
     } catch (e) {
       print(e);

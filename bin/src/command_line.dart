@@ -53,7 +53,7 @@ abstract class CommandLinePart {
     return true;
   }
 
-  /// Performs checks on options --packages, --package-root and --token
+  /// Performs checks on options --packages and --token
   /// before returning a `CommandLineClient` instance.
   CommandLineClient getCommandLineClient(ArgResults res) {
     var token = res["token"];
@@ -79,21 +79,14 @@ abstract class CommandLinePart {
   }
 
   FileSystemEntity handlePackages(ArgResults res) {
-    FileSystemEntity pRoot;
-    String type;
+    String pFilePath = res["packages"] ?? ".packages";
+    FileSystemEntity pRoot = File(pFilePath);
+    String type = "file";
+
     if (res["package-root"] != null) {
-      if (res["packages"] != null) {
-        print(
-            "You cannot use both --packages and --package-root options at the same time.");
-        return null;
-      }
-      pRoot = new Directory(res["package-root"]);
-      type = "directory";
-    } else {
-      String pFilePath = res["packages"] ?? ".packages";
-      pRoot = new File(pFilePath);
-      type = "file";
+      throw ArgumentError("package-root has been deprecated, use --packages.");
     }
+
     if (!pRoot.existsSync()) {
       print("Packages $type does not exist");
       return null;
@@ -110,11 +103,11 @@ abstract class CommandLinePart {
       ..addOption(
         "packages",
         help:
-            'Specifies the path to the package resolution configuration file. This option cannot be used with --package-root.',
+            'Specifies the path to the package resolution configuration file.',
       )
       ..addOption("package-root",
           help:
-              'Specifies where to find imported libraries. This option cannot be used with --packages.');
+              'Specifies where to find imported libraries (deprecated, use --packages).');
   }
 
   Future parseAndExecute(List<String> args) => execute(parser.parse(args));
